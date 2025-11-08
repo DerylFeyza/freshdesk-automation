@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
-	postgres "github.com/DerylFeyza/freshdesk-automation/lib"
 	"github.com/DerylFeyza/freshdesk-automation/routes"
 
 	"github.com/gin-gonic/gin"
@@ -13,12 +13,17 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
+	pathDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("cannot get working directory: %v", err)
+	}
+
+	err = godotenv.Load(filepath.Join(pathDir, ".env"))
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	postgres.Connect()
+	// postgres.Connect()
 
 	router := gin.Default()
 	routes.RegisterRoutes(router)

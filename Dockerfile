@@ -16,6 +16,7 @@ WORKDIR /app
 
 # Copy only the binary
 COPY --from=builder /app/main .
+COPY .env .env
 
 EXPOSE 4003
 CMD ["./main"]
