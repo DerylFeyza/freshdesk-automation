@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	postgres "github.com/DerylFeyza/freshdesk-automation/lib"
+	"github.com/DerylFeyza/freshdesk-automation/database"
 	"github.com/DerylFeyza/freshdesk-automation/models"
 	"gorm.io/gorm"
 )
@@ -12,18 +12,18 @@ type TicketRepository struct {
 	db *gorm.DB
 }
 
-// Global repository instance
 var Tickets *TicketRepository
 
-// InitRepository initializes the global repository instance
-// Must be called after postgres.Connect()
 func InitRepository() {
 	Tickets = NewTicketRepository()
+	Attachments = NewAttachmentRepository()
+	TicketStatusLogs = NewTicketStatusLogRepository()
+	Proactive = NewProactiveRepository()
 }
 
 func NewTicketRepository() *TicketRepository {
 	return &TicketRepository{
-		db: postgres.DB,
+		db: database.DB,
 	}
 }
 
@@ -31,19 +31,6 @@ func (r *TicketRepository) Create(ticket *models.Tickets) error {
 	return r.db.Create(ticket).Error
 }
 
-func (r *TicketRepository) FindByID(id uint) (*models.Tickets, error) {
-	var ticket models.Tickets
-	err := r.db.First(&ticket, id).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("ticket not found")
-		}
-		return nil, err
-	}
-	return &ticket, nil
-}
-
-// FindByTicketID retrieves a ticket by its Freshdesk ticket ID
 func (r *TicketRepository) FindByTicketID(ticketID string) (*models.Tickets, error) {
 	var ticket models.Tickets
 	err := r.db.Where("ticket_id = ?", ticketID).First(&ticket).Error
@@ -56,10 +43,9 @@ func (r *TicketRepository) FindByTicketID(ticketID string) (*models.Tickets, err
 	return &ticket, nil
 }
 
-// FindByUUID retrieves a ticket by its UUID
-func (r *TicketRepository) FindByUUID(uuid string) (*models.Tickets, error) {
+func (r *TicketRepository) FindByFreshdeskID(freshdeskID string) (*models.Tickets, error) {
 	var ticket models.Tickets
-	err := r.db.Where("ticket_uuid = ?", uuid).First(&ticket).Error
+	err := r.db.Where("ticket_freshdesk_id = ?", freshdeskID).First(&ticket).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("ticket not found")
@@ -180,8 +166,9 @@ func (r *TicketRepository) Search(keyword string, limit, offset int) ([]models.T
 }
 
 func (r *TicketRepository) CreateOrUpdate(ticket *models.Tickets) error {
+
 	var existing models.Tickets
-	err := r.db.Where("ticket_id = ?", ticket.Ticket_id).First(&existing).Error
+	err := r.db.Where("ticket_freshdesk_id = ?", ticket.Ticket_freshdesk_id).First(&existing).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return r.db.Create(ticket).Error
@@ -189,7 +176,7 @@ func (r *TicketRepository) CreateOrUpdate(ticket *models.Tickets) error {
 		return err
 	}
 
-	ticket.Ticket_uuid = existing.Ticket_uuid
+	ticket.Ticket_id = existing.Ticket_id
 	ticket.Created_at = existing.Created_at
 	return r.db.Save(ticket).Error
 }

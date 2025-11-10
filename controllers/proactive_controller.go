@@ -16,5 +16,5 @@ func FindFreshdeskTicket(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.Data(http.StatusOK, "application/json", body)
+	c.JSON(http.StatusOK, body)
 }
