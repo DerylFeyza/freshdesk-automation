@@ -1,10 +1,7 @@
 package models
 
-import "gorm.io/gorm"
-
 type Tickets struct {
-	gorm.Model
-	Ticket_uuid string `gorm:"type:uuid;default:gen_random_uuid()"`
+	Ticket_uuid string `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	Ticket_id   string `gorm:"uniqueIndex"`
 	Subject     string
 	Description string

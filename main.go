@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	postgres "github.com/DerylFeyza/freshdesk-automation/lib"
+	"github.com/DerylFeyza/freshdesk-automation/repository"
 	"github.com/DerylFeyza/freshdesk-automation/routes"
 
 	"github.com/gin-gonic/gin"
@@ -23,7 +25,8 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	// postgres.Connect()
+	postgres.Connect()
+	repository.InitRepository()
 
 	router := gin.Default()
 	routes.RegisterRoutes(router)

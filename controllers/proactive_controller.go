@@ -7,10 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func FindTicket(c *gin.Context) {
+func FindFreshdeskTicket(c *gin.Context) {
+
 	ticketID := c.Param("id")
 
-	body, err := ticket.GetTicketByID(ticketID)
+	body, err := ticket.GetFreshdeskTicketByID(ticketID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
