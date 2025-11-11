@@ -16,7 +16,6 @@ var Tickets *TicketRepository
 
 func InitRepository() {
 	Tickets = NewTicketRepository()
-	Attachments = NewAttachmentRepository()
 	TicketStatusLogs = NewTicketStatusLogRepository()
 	Proactive = NewProactiveRepository()
 }

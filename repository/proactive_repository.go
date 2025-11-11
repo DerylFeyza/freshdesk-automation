@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/DerylFeyza/freshdesk-automation/database"
 	"github.com/DerylFeyza/freshdesk-automation/models"
@@ -30,19 +31,22 @@ func (r *ProactiveRepository) CheckProactiveRole(emp_id string) (interface{}, er
 
 	err := r.Internaldb.
 		Table("proactive2.users a").
-		Select("a.emp_id, b.role_name").
+		Select("a.emp_id AS emp_id, b.role_name AS role_name").
 		Joins("JOIN proactive2.role b ON a.role_id = b.role_id").
 		Where("a.emp_id = ?", emp_id).
-		First(&result).Error
+		Take(&result).
+		Error
+
+	fmt.Printf("Proactive Role Check Result: %+v\n", result)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
+			return nil, nil
 		}
 		return nil, err
 	}
 
-	return result, nil
+	return &result, nil
 }
 
 func (r *ProactiveRepository) Create(log *models.ProactiveLogs) error {

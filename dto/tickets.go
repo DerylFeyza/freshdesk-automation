@@ -7,9 +7,8 @@ import (
 )
 
 type UpsertTicketResult struct {
-	Ticket      *models.Tickets      `json:"ticket"`
-	Attachments []models.Attachments `json:"attachments,omitempty"`
-	Status      int                  `json:"status"`
+	Ticket *models.Tickets `json:"ticket"`
+	Status int             `json:"status"`
 }
 
 type Ticket struct {

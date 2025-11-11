@@ -64,11 +64,6 @@ func Connect() {
 		log.Fatal("failed to migrate TicketStatusUpdateLogs:", err)
 	}
 
-	err = DB.AutoMigrate(&models.Attachments{})
-	if err != nil {
-		log.Fatal("failed to migrate Attachments:", err)
-	}
-
 	err = DB.AutoMigrate(&models.ProactiveLogs{})
 	if err != nil {
 		log.Fatal("failed to migrate ProactiveLogs:", err)

@@ -22,13 +22,6 @@ type TicketStatusUpdateLogs struct {
 	Ticket                      Tickets
 }
 
-type Attachments struct {
-	Attachment_id string `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Ticket_id     string
-	Ticket        Tickets
-	Attachment    string
-}
-
 type ProactiveLogs struct {
 	Proactive_log_id            string `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	Ticket_status_update_log_id string

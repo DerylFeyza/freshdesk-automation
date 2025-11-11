@@ -58,22 +58,7 @@ func UpsertTicketLog(ticketData dto.Ticket) (*dto.UpsertTicketResult, error) {
 		return nil, fmt.Errorf("failed to upsert ticket into database: %w", err)
 	}
 
-	var attachments []models.Attachments
 	if existingTicket == nil {
-		if len(ticketData.Attachments) > 0 {
-			attachments = make([]models.Attachments, 0, len(ticketData.Attachments))
-			for _, att := range ticketData.Attachments {
-				attachment := models.Attachments{
-					Ticket_id:  ticket.Ticket_id,
-					Attachment: att.AttachmentURL,
-				}
-				attachments = append(attachments, attachment)
-			}
-
-			if err := repository.Attachments.BatchCreate(attachments); err != nil {
-				return nil, fmt.Errorf("failed to create attachments: %w", err)
-			}
-		}
 
 		ticketStatus := &models.TicketStatusUpdateLogs{
 			Ticket_id:  ticket.Ticket_id,
@@ -86,10 +71,32 @@ func UpsertTicketLog(ticketData dto.Ticket) (*dto.UpsertTicketResult, error) {
 		}
 	}
 
+	ticketStatusLogs, err := repository.TicketStatusLogs.FindByTicketID(ticket.Ticket_id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch ticket status logs: %w", err)
+	}
+
+	if len(ticketStatusLogs) == 0 {
+		return nil, fmt.Errorf("no ticket status logs found")
+	}
+
+	latestLog := ticketStatusLogs[0]
+
+	if latestLog.Status != ticketData.Status {
+		ticketStatus := &models.TicketStatusUpdateLogs{
+			Ticket_id:  ticket.Ticket_id,
+			Status:     ticketData.Status,
+			Created_at: time.Now(),
+		}
+
+		if err := repository.TicketStatusLogs.Create(ticketStatus); err != nil {
+			return nil, fmt.Errorf("failed to create ticket status log: %w", err)
+		}
+	}
+
 	return &dto.UpsertTicketResult{
-		Ticket:      ticket,
-		Attachments: attachments,
-		Status:      ticketData.Status,
+		Ticket: ticket,
+		Status: ticketData.Status,
 	}, nil
 
 }
