@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -91,6 +92,62 @@ func UpsertTicketLog(ticketData dto.Ticket) (*dto.UpsertTicketResult, error) {
 
 		if err := repository.TicketStatusLogs.Create(ticketStatus); err != nil {
 			return nil, fmt.Errorf("failed to create ticket status log: %w", err)
+		}
+	}
+
+	if ticketData.GroupID != nil && *ticketData.GroupID == int64(61000171936) && len(ticketData.Attachments) > 0 {
+		attachment := ticketData.Attachments[0]
+		attachmentText, err := AttachmentToText(attachment.AttachmentURL)
+
+		if err != nil {
+
+			return nil, fmt.Errorf("error converting attachment to text: %v", err)
+
+		}
+
+		userPemohonRegex := regexp.MustCompile(`(?is)User.*?Pemohon.*?(\d{8}|\d{6})`)
+		match := userPemohonRegex.FindStringSubmatch(string(attachmentText))
+
+		if len(match) >= 2 {
+			nik := match[1]
+			proactiveData, err := repository.Proactive.CheckProactiveRole(nik)
+			var roleName string
+			if err != nil {
+				roleName = "Not Found"
+			} else if proactiveData == nil {
+				roleName = "Not Found"
+			} else {
+				data := proactiveData.(*struct {
+					EmpID    string
+					RoleName string
+				})
+				roleName = data.RoleName
+			}
+
+			ticketStatusLogs, err := repository.TicketStatusLogs.FindByTicketID(ticket.Ticket_id)
+			if err != nil {
+				return nil, fmt.Errorf("error fetching ticket status logs: %v", err)
+			}
+
+			if len(ticketStatusLogs) == 0 {
+				return nil, fmt.Errorf("no ticket status logs found")
+			}
+
+			latestLog := ticketStatusLogs[0]
+
+			ticketLog := &models.ProactiveLogs{
+				Ticket_status_update_log_id: latestLog.Ticket_status_update_log_id,
+				Emp_id:                      nik,
+				Role_name:                   roleName,
+			}
+			err = repository.Proactive.Create(ticketLog)
+			if err != nil {
+				fmt.Printf("❌ Failed to create proactive log: %v\n", err)
+			} else {
+				fmt.Printf("✅ Created proactive log for NIK: %s with role: %s\n", nik, roleName)
+			}
+		} else {
+			fmt.Println("❌ No 6 or 8 digit NIK found after 'User' and 'Pemohon'")
 		}
 	}
 
